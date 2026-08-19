@@ -1,0 +1,39 @@
+# --- Python kesh fayllari ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# --- Virtual muhit (Virtual Environment) ---
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# --- Maxfiy sozlamalar va kalitlar (Juda muhim!) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Baza va lokal ma'lumotlar ---
+*.sqlite3
+*.db
+*.log
+
+# --- Muharrir (IDE) va Operatsion tizim fayllari ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Test va Coverage fayllari ---
+.pytest_cache/
+.coverage
+htmlcov/
