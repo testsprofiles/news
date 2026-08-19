@@ -1,0 +1,106 @@
+openapi: 3.0.0
+info:
+  title: News Portal API
+  description: Yangiliklar  uchun Backend API 
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:5000
+    description: Lokal server
+    
+
+paths:
+  /auth/register:
+    post:
+      summary: royxatdan otqazish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "musavvir"
+                password:
+                  type: string
+                  example: "parol123"
+      responses:
+        '201':
+          description: Foydalanuvchi yaratildi
+
+
+  /auth/login:
+    post:
+      summary: Kirish , Token olish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "musavvir"
+                password:
+                  type: string
+                  example: "parol123"
+      responses:
+        '200':
+          description: Muvaffaqiyatli kirildi (Token qaytdi)
+
+  /categories:
+    get:
+      summary: Barcha kategoryalarni olish
+      responses:
+        '200':
+          description: Kategoriyalar ro'yxati
+    post:
+      summary: Yangi kategorya yaratish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Texnologiya"
+                slug:
+                  type: string
+                  example: "texnologiya"
+      responses:
+        '201':
+          description: Kategory yaratildi
+
+
+  /posts:
+    get:
+      summary: Barcha yangiliklarni olish
+      responses:
+        '200':
+          description: Yangiliklar roixati
+    post:
+      summary: Yangi yangilik qoshish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Sun'iy intellekt rivojlanishi"
+                content:
+                  type: string
+                  example: "Yangilikning to'liq matni..."
+                category_id:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Yangilik yaratildi
