@@ -29,7 +29,7 @@ def auth_login():
         password_ok = False
 
     if password_ok:
-        oken = create_token(user['id'], role='admin')
+        token = create_token(user['id'], role='admin')
         return jsonify({
             'message': 'Muvaffaqiyatli login qilindi!',
             'token': token
