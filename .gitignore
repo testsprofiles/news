@@ -11,7 +11,7 @@ venv/
 ENV/
 env/
 env.bak/
-venv.bak/
+venv.bak/find . -type d -name "__pycache__" -exec rm -r {} +
 
 # --- Maxfiy sozlamalar va kalitlar (Juda muhim!) ---
 .env
@@ -21,6 +21,7 @@ venv.bak/
 *.key
 
 # --- Baza va lokal ma'lumotlar ---
+
 *.sqlite3
 *.db
 *.log

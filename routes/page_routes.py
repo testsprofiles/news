@@ -21,7 +21,7 @@ def get_pages():
             "content": page[2],
             "slug": page[3]
         })
-
+#----------------------------------------------------------------------qwertyuioitqwertyuiuytrewqwert
     return jsonify(result), 200
 
 @page_bp.route('/pages', methods=['POST'])

@@ -5,6 +5,7 @@ from routes.post_routes import posts_bp
 from routes.category_routes import category_bp
 from routes.comment_routes import comment_bp
 from routes.page_routes import page_bp
+import os
 
 app = Flask(__name__)
 
@@ -41,4 +42,5 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug_mode = os.getenv("FLASK_DEBUG", "False") == "True"
+    app.run(debug=debug_mode, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))

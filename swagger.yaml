@@ -10,27 +10,6 @@ servers:
     
 
 paths:
-  /auth/register:
-    post:
-      summary: royxatdan otqazish
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  example: "musavvir"
-                password:
-                  type: string
-                  example: "parol123"
-      responses:
-        '201':
-          description: Foydalanuvchi yaratildi
-
-
   /auth/login:
     post:
       summary: Kirish , Token olish
