@@ -104,3 +104,70 @@ paths:
       responses:
         '201':
           description: Yangilik yaratildi
+
+
+  /pages:
+    get:
+      summary: Barcha sahifani olish
+      responses:
+        '200':
+          description: Sahifa ro'yxati qaytdi
+    post:
+      summary: Yangi sahifa yaratish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - content
+                - slug
+              properties:
+                title:
+                  type: string
+                  example: "Biz haqimizda"
+                content:
+                  type: string
+                  example: "Project haqida  ma'lumot..."
+                slug:
+                  type: string
+                  example: "biz haqimizda"
+      responses:
+        '201':
+          description: Sahifa yaratildi
+        '400':
+          description: Ma'lumotlar  togri emas
+
+  /comments:
+    get:
+      summary: Barcha izohlarni olish
+      responses:
+        '200':
+          description: Izohlar ro'yxati qaytdi
+    post:
+      summary: Postga yangi izoh qo'shish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - post_id
+                - text
+              properties:
+                post_id:
+                  type: integer
+                  example: 1
+                text:
+                  type: string
+                  example: "Juda ajoyib yangilik bolibdi!"
+      responses:
+        '201':
+          description: Izoh saqlandi
+        '400':
+          description:  matn yoki post_id notori
+        '404':
+          description: post topilmadi
