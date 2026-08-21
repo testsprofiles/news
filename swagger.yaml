@@ -20,12 +20,12 @@ paths:
             schema:
               type: object
               properties:
-                username:
+                username:               
                   type: string
-                  example: "musavvir"
+                  example: "admin"
                 password:
                   type: string
-                  example: "parol123"
+                  example: "yangi_parolim123"
       responses:
         '200':
           description: Muvaffaqiyatli kirildi (Token qaytdi)
