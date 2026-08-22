@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from database import get_db_connection
 from utils.auth import token_required
+import psycopg2
+import psycopg2.extras
 
 category_bp = Blueprint('category', __name__)
 
@@ -12,7 +14,7 @@ def get_categories():
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM categories ORDER BY id ASC;")
     categories = cur.fetchall()
     cur.close()
@@ -35,14 +37,26 @@ def create_category(current_user_id):
     conn = get_db_connection()
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
+        
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur.execute(
+            "INSERT INTO categories (name) VALUES (%s) RETURNING id, name;",
+            (name,)
+        )
+        new_category = cur.fetchone()
+        conn.commit()
+    except psycopg2.errors.UniqueViolation:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Bu kategoriya nomi allaqachon mavjud!'}), 400
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
 
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO categories (name) VALUES (%s) RETURNING id, name;",
-        (name,)
-    )
-    new_category = cur.fetchone()
-    conn.commit()
     cur.close()
     conn.close()
 
@@ -65,21 +79,36 @@ def update_category(current_user_id, cat_id):
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
-    cur = conn.cursor()
-    cur.execute(
-        "UPDATE categories SET name = %s WHERE id = %s RETURNING id, name;",
-        (name, cat_id)
-    )
-    updated = cur.fetchone()
-    conn.commit()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        cur.execute(
+            "UPDATE categories SET name = %s WHERE id = %s RETURNING id, name;",
+            (name, cat_id)
+        )
+        updated = cur.fetchone()
+        
+        if not updated:
+            conn.rollback()
+            cur.close()
+            conn.close()
+            return jsonify({'message': 'Kategoriya topilmadi!'}), 404
+            
+        conn.commit()
+    except psycopg2.errors.UniqueViolation:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Bu nomdagi kategoriya allaqachon mavjud!'}), 400
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+
     cur.close()
     conn.close()
 
-    if not updated:
-        return jsonify({'message': 'Kategoriya topilmadi!'}), 404
-
     return jsonify({'message': 'Kategoriya yangilandi!', 'category': updated}), 200
-
 
 @category_bp.route('/api/categories/<int:cat_id>', methods=['DELETE'])
 @token_required
@@ -88,7 +117,7 @@ def delete_category(current_user_id, cat_id):
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("DELETE FROM categories WHERE id = %s RETURNING id;", (cat_id,))
     deleted = cur.fetchone()
     conn.commit()
