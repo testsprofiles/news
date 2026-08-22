@@ -6,10 +6,9 @@ comment_bp = Blueprint('comment_bp', __name__)
 
 @comment_bp.route('/api/comments', methods=['GET'])
 def get_comments():
-       conn = get_db_connection()
+    conn = get_db_connection()
     if not conn:                                              
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500  
-    cur = conn.cursor()
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, post_id, text FROM comments;")
@@ -20,9 +19,9 @@ def get_comments():
     result = []
     for comment in comments:
         result.append({
-            "id": comment[0],
-            "post_id": comment[1],
-            "text": comment[2]
+            "id": comment['id'],
+            "post_id": comment['post_id'],
+            "text": comment['text']
         })
 
     return jsonify(result), 200
@@ -31,10 +30,9 @@ def get_comments():
 @comment_bp.route('/api/comments', methods=['POST'])
 @token_required
 def create_comment(current_user):
-     conn = get_db_connection()
+    conn = get_db_connection()
     if not conn:                                             
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500  
-    cur = conn.cursor()
     data = request.get_json() or {}
     post_id = data.get('post_id')
     text = data.get('text')
@@ -72,7 +70,7 @@ def create_comment(current_user):
         "insert into comments (post_id, text) values (%s, %s) returning id;",
         (post_id, text)
     )
-    new_id = cur.fetchone()[0]
+    new_id = cur.fetchone()['id']
     conn.commit()
     cur.close()
     conn.close()
