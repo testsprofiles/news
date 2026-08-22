@@ -4,8 +4,12 @@ from utils.auth import token_required
 
 comment_bp = Blueprint('comment_bp', __name__)
 
-@comment_bp.route('/comments', methods=['GET'])
+@comment_bp.route('/api/comments', methods=['GET'])
 def get_comments():
+       conn = get_db_connection()
+    if not conn:                                              
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500  
+    cur = conn.cursor()
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, post_id, text FROM comments;")
@@ -24,9 +28,13 @@ def get_comments():
     return jsonify(result), 200
 
 
-@comment_bp.route('/comments', methods=['POST'])
+@comment_bp.route('/api/comments', methods=['POST'])
 @token_required
 def create_comment(current_user):
+     conn = get_db_connection()
+    if not conn:                                             
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500  
+    cur = conn.cursor()
     data = request.get_json() or {}
     post_id = data.get('post_id')
     text = data.get('text')

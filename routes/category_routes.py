@@ -23,7 +23,7 @@ def get_categories():
 
 
 
-@category_bp.route('/admin/categories', methods=['POST'])
+@category_bp.route('/api/categories', methods=['POST'])
 @token_required
 def create_category(current_user_id):
     data = request.get_json() or {}
@@ -52,7 +52,7 @@ def create_category(current_user_id):
     }), 201
 
 
-@category_bp.route('/admin/categories/<int:cat_id>', methods=['PUT'])
+@category_bp.route('/api/categories/<int:cat_id>', methods=['PUT'])
 @token_required
 def update_category(current_user_id, cat_id):
     data = request.get_json() or {}
@@ -81,7 +81,7 @@ def update_category(current_user_id, cat_id):
     return jsonify({'message': 'Kategoriya yangilandi!', 'category': updated}), 200
 
 
-@category_bp.route('/admin/categories/<int:cat_id>', methods=['DELETE'])
+@category_bp.route('/api/categories/<int:cat_id>', methods=['DELETE'])
 @token_required
 def delete_category(current_user_id, cat_id):
     conn = get_db_connection()

@@ -49,7 +49,7 @@ def get_single_post(post_id):
 
 
 
-@posts_bp.route('/admin/posts', methods=['POST'])
+@posts_bp.route('/api/posts', methods=['POST'])
 @token_required
 def create_post(current_user_id):
     data = request.get_json() or {}
@@ -80,7 +80,7 @@ def create_post(current_user_id):
     }), 201
 
 
-@posts_bp.route('/admin/posts/<int:post_id>', methods=['PUT'])
+@posts_bp.route('/api/posts/<int:post_id>', methods=['PUT'])
 @token_required
 def update_post(current_user_id, post_id):
     data = request.get_json() or {}
@@ -108,7 +108,7 @@ def update_post(current_user_id, post_id):
     return jsonify({'message': 'Yangilik muvaffaqiyatli yangilandi!'}), 200
 
 
-@posts_bp.route('/admin/posts/<int:post_id>', methods=['DELETE'])
+@posts_bp.route('/api/posts/<int:post_id>', methods=['DELETE'])
 @token_required
 def delete_post(current_user_id, post_id):
     conn = get_db_connection()
