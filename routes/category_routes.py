@@ -3,10 +3,14 @@ from database import get_db_connection
 from utils.auth import token_required
 import psycopg2
 import psycopg2.extras
+import re
+
 
 category_bp = Blueprint('category', __name__)
 
-
+def make_slug(text):
+    text = text.lower().strip()
+    return re.sub(r'[\s_]+', '-', text)
 
 @category_bp.route('/api/categories', methods=['GET'])
 def get_categories():
@@ -23,8 +27,6 @@ def get_categories():
     return jsonify(categories), 200
 
 
-
-
 @category_bp.route('/api/categories', methods=['POST'])
 @token_required
 def create_category(current_user_id):
@@ -39,6 +41,15 @@ def create_category(current_user_id):
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
         
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    new_slug = make_slug(name)
+    cur.execute("SELECT id, name FROM categories;")
+    all_categories = cur.fetchall()
+    
+    for cat in all_categories:
+        if make_slug(cat['name']) == new_slug:
+            cur.close()
+            conn.close()
+            return jsonify({'message': 'Bu nomdagi (yoki o`xshash slugli) kategoriya allaqachon mavjud!'}), 400
     try:
         cur.execute(
             "INSERT INTO categories (name) VALUES (%s) RETURNING id, name;",
@@ -80,6 +91,15 @@ def update_category(current_user_id, cat_id):
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    new_slug = make_slug(name)
+    cur.execute("SELECT id, name FROM categories WHERE id != %s;", (cat_id,))
+    other_categories = cur.fetchall()
+    
+    for cat in other_categories:
+        if make_slug(cat['name']) == new_slug:
+            cur.close()
+            conn.close()
+            return jsonify({'message': 'Bu nomdagi (yoki o`xshash slugli) kategoriya allaqachon mavjud!'}), 400
     try:
         cur.execute(
             "UPDATE categories SET name = %s WHERE id = %s RETURNING id, name;",
@@ -128,3 +148,4 @@ def delete_category(current_user_id, cat_id):
         return jsonify({'message': 'Kategoriya topilmadi!'}), 404
 
     return jsonify({'message': 'Kategoriya o`chirib tashlandi!'}), 200
+    

@@ -39,14 +39,22 @@ def get_single_post(post_id):
         WHERE p.id = %s;
     """, (post_id,))
     post = cur.fetchone()
+
+    if not post:
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Yangilik topilmadi!'}), 404
+
+    cur.execute("SELECT id, post_id, text FROM comments WHERE post_id = %s;", (post_id,))
+    comments = cur.fetchall()
     cur.close()
     conn.close()
 
-    if not post:
-        return jsonify({'message': 'Yangilik topilmadi!'}), 404
+    post_data = dict(post)
+    post_data['comments'] = comments
+    post_data['comment_count'] = len(comments)
 
-    return jsonify(post), 200
-
+    return jsonify(post_data), 200
 
 
 @posts_bp.route('/api/posts', methods=['POST'])
