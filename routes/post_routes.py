@@ -61,12 +61,15 @@ def get_single_post(post_id):
 @token_required
 def create_post(current_user_id):
     data = request.get_json() or {}
-    title = data.get('title')
-    content = data.get('content')
+    title = str(data.get('title', '')).strip()
+    content = str(data.get('content', '')).strip()
     category_id = data.get('category_id')
 
     if not title or not content:
-        return jsonify({'message': 'Title va content kiritilishi shart!'}), 400
+        return jsonify({'message': 'Title va content bosh bolishi mumkin emas!'}), 400
+
+    if category_id is not None and not isinstance(category_id, int):
+        return jsonify({'message': 'category_id butun son bolishi kerak!'}), 400
 
     conn = get_db_connection()
     if not conn:
@@ -86,7 +89,23 @@ def create_post(current_user_id):
         'message': 'Yangilik muvaffaqiyatli qo`shildi!',
         'post': new_post
     }), 201
-
+    try:
+        cur.execute(
+            "INSERT INTO posts (title, content, category_id) VALUES (%s, %s, %s) RETURNING id, created_at;",
+            (title, content, category_id)
+        )
+        new_post = cur.fetchone()
+        conn.commit()
+        return jsonify({
+            'message': 'Yangilik muvaffaqiyatli qo`shildi!',
+            'post': new_post
+        }), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+    finally:
+        cur.close()
+        conn.close()
 
 @posts_bp.route('/api/posts/<int:post_id>', methods=['PUT'])
 @token_required
@@ -124,13 +143,18 @@ def delete_post(current_user_id, post_id):
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
     cur = conn.cursor()
-    cur.execute("DELETE FROM posts WHERE id = %s RETURNING id;", (post_id,))
-    deleted = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("DELETE FROM posts WHERE id = %s RETURNING id;", (post_id,))
+        deleted = cur.fetchone()
+        conn.commit()
 
-    if not deleted:
-        return jsonify({'message': 'Yangilik topilmadi!'}), 404
+        if not deleted:
+            return jsonify({'message': 'Yangilik topilmadi!'}), 404
 
-    return jsonify({'message': 'Yangilik o`chirib tashlandi!'}), 200
+        return jsonify({'message': 'Yangilik o`chirib tashlandi!'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+    finally:
+        cur.close()
+        conn.close()
