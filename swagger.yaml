@@ -61,6 +61,14 @@ paths:
   /api/posts:
     get:
       summary: Barcha yangiliklarni olish
+      parameters:
+        - name: title
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "nmadr"
+          description: "Title shu qiymat bilan boshlanadigan postlarni qaytaradi (prefix bo'yicha, katta-kichik harf farqsiz)"
       responses:
         '200':
           description: Yangiliklar roixati
@@ -100,45 +108,7 @@ paths:
         responses:
           '200':
             description: Post va unga tegishli kommentlar qaytdi
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                      example: 1
-                    title:
-                      type: string
-                      example: "Sun'iy intellekt rivojlanishi"
-                    content:
-                      type: string
-                      example: "Yangilikning to'liq matni..."
-                    created_at:
-                      type: string
-                      example: "2026-08-20T10:30:00"
-                    category_name:
-                      type: string
-                      example: "Texnologiya"
-                    comment_count:
-                      type: integer
-                      example: 2
-                    comments:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 1
-                          post_id:
-                            type: integer
-                            example: 1
-                          text:
-                            type: string
-                            example: "Juda ajoyib yangilik bolibdi!"
-          '404':
-            description: Yangilik topilmadi
+           
 
 
   /api/pages:
