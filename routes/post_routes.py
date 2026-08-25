@@ -7,22 +7,36 @@ posts_bp = Blueprint('posts', __name__)
 
 @posts_bp.route('/api/posts', methods=['GET'])
 def get_posts():
+    title_filter = request.args.get('title')
+
     conn = get_db_connection()
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
     cur = conn.cursor()
-    cur.execute("""
-        SELECT p.id, p.title, p.content, p.created_at, c.name as category_name 
-        FROM posts p
-        LEFT JOIN categories c ON p.category_id = c.id
-        ORDER BY p.created_at DESC;
-    """)
-    posts = cur.fetchall()
-    cur.close()
-    conn.close()
+    try:
+        if title_filter:
+            cur.execute(
+                "SELECT id, title, content, category_id, created_at FROM posts "
+                "WHERE title ILIKE %s ORDER BY created_at DESC;",
+                (title_filter + '%',)
+            )
+        else:
+            cur.execute(
+                "SELECT id, title, content, category_id, created_at FROM posts "
+                "ORDER BY created_at DESC;"
+            )
+        posts = cur.fetchall()
+        return jsonify(posts), 200
 
-    return jsonify(posts), 200
+
+    except Exception as e:
+        conn.rollback() 
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+
+    finally:
+        cur.close()  
+        conn.close()
 
 
 @posts_bp.route('/api/posts/<int:post_id>', methods=['GET'])
@@ -76,19 +90,6 @@ def create_post(current_user_id):
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO posts (title, content, category_id) VALUES (%s, %s, %s) RETURNING id, created_at;",
-        (title, content, category_id)
-    )
-    new_post = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return jsonify({
-        'message': 'Yangilik muvaffaqiyatli qo`shildi!',
-        'post': new_post
-    }), 201
     try:
         cur.execute(
             "INSERT INTO posts (title, content, category_id) VALUES (%s, %s, %s) RETURNING id, created_at;",

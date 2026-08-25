@@ -90,7 +90,7 @@ def update_category(current_user_id, cat_id):
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     new_slug = make_slug(name)
     cur.execute("SELECT id, name FROM categories WHERE id != %s;", (cat_id,))
     other_categories = cur.fetchall()
@@ -138,12 +138,21 @@ def delete_category(current_user_id, cat_id):
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("DELETE FROM categories WHERE id = %s RETURNING id;", (cat_id,))
-    deleted = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("DELETE FROM categories WHERE id = %s RETURNING id;", (cat_id,))
+        deleted = cur.fetchone()
+        conn.commit()
 
+        if not deleted:
+            return jsonify({'message': 'Kategoriya topilmadi!'}), 404
+
+        return jsonify({'message': 'Kategoriya o`chirib tashlandi!'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+    finally:
+        cur.close()
+        conn.close()
     if not deleted:
         return jsonify({'message': 'Kategoriya topilmadi!'}), 404
 

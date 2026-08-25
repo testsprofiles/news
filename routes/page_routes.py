@@ -9,11 +9,15 @@ page_bp = Blueprint('page_bp', __name__)
 @page_bp.route('/api/pages', methods=['GET'])
 def get_pages():
     conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
     cur = conn.cursor()
-    cur.execute("SELECT id, title, content, slug FROM pages;")
-    pages = cur.fetchall()
-    cur.close()
-    conn.close()
+    try:
+        cur.execute("SELECT id, title, content, slug FROM pages;")
+        pages = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
 
     result = []
     for page in pages:
@@ -29,14 +33,17 @@ def get_pages():
 @token_required
 def create_page(current_user):
     data = request.get_json() or {}
-    title = data.get('title')
-    content = data.get('content')
-    slug = data.get('slug')
+    title = str(data.get('title', '')).strip()
+    content = str(data.get('content', '')).strip()
+    slug = str(data.get('slug', '')).strip()
+
 
     if not title or not content or not slug:
         return jsonify({"message": "title, content va slug kiritilishi shart!"}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
     cur = conn.cursor()
     try:
         cur.execute(
@@ -47,11 +54,12 @@ def create_page(current_user):
         conn.commit()     
     except psycopg2.errors.UniqueViolation:                        
         conn.rollback()                                            
-        cur.close()                                                
-        conn.close()                                               
+                                                      
         return jsonify({"message": f"'{slug}' slug bilan sahifa allaqachon mavjud!"}), 400  # <<< YANGI QATOR
-
-    cur.close()
-    conn.close()
-
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"message": f"Xatolik yuz berdi: {str(e)}"}), 500
+    finally:
+        cur.close()
+        conn.close()
     return jsonify({"message": "Sahifa yaratildi", "id": new_id}), 201

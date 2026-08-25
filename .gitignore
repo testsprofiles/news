@@ -37,4 +37,4 @@ Thumbs.db
 # --- Test va Coverage fayllari ---
 .pytest_cache/
 .coverage
-htmlcov/
+htmlcov/yoyo.ini
