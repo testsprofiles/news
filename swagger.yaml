@@ -95,21 +95,35 @@ paths:
       responses:
         '201':
           description: Yangilik yaratildi
-  /api/posts/{postId}:
-    get:
-        summary: Bitta yangilikni (va uning kommentlarini) olish
-        parameters:
+  /api/posts/{postId}/image:
+    post:
+      summary: Postga rasm yuklash
+      security:
+        - Bearer: []
+      parameters:
         - name: postId
           in: path
           required: true
           schema:
             type: integer
           example: 1
-        responses:
-          '200':
-            description: Post va unga tegishli kommentlar qaytdi
-           
-
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Rasm muvaffaqiyatli yuklandi
+        '400':
+          description: Fayl notogri yoki topilmagan
+        '404':
+          description: Post topilmadi
 
   /api/pages:
     get:

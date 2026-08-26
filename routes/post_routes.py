@@ -1,8 +1,17 @@
 from flask import Blueprint, request, jsonify
+import os
+import uuid
+from flask import current_app
 from database import get_db_connection
 from utils.auth import token_required
+import re
 
 posts_bp = Blueprint('posts', __name__)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @posts_bp.route('/api/posts', methods=['GET'])
@@ -16,14 +25,19 @@ def get_posts():
     cur = conn.cursor()
     try:
         if title_filter:
+
+            if any(ch.isdigit() for ch in title_filter):
+                return jsonify({"error": "title parametrida raqam bo'lishi mumkin emas"}), 400
+            if len(title_filter) > 3:
+                return jsonify({"error": "title parametri 3 ta harfdan oshmasligi kerak"}), 400
             cur.execute(
-                "SELECT id, title, content, category_id, created_at FROM posts "
-                "WHERE title ILIKE %s ORDER BY created_at DESC;",
-                (title_filter + '%',)
+                "SELECT id, title, content, category_id, image_url, created_at FROM posts "
+                "WHERE title ~* %s ORDER BY created_at DESC;",
+                (r'\m' + re.escape(title_filter),)
             )
         else:
             cur.execute(
-                "SELECT id, title, content, category_id, created_at FROM posts "
+                "SELECT id, title, content, category_id, image_url, created_at FROM posts "
                 "ORDER BY created_at DESC;"
             )
         posts = cur.fetchall()
@@ -47,7 +61,7 @@ def get_single_post(post_id):
 
     cur = conn.cursor()
     cur.execute("""
-        SELECT p.id, p.title, p.content, p.created_at, c.name as category_name 
+        SELECT p.id, p.title, p.content, p.image_url, p.created_at, c.name as category_name 
         FROM posts p
         LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.id = %s;
@@ -153,6 +167,49 @@ def delete_post(current_user_id, post_id):
             return jsonify({'message': 'Yangilik topilmadi!'}), 404
 
         return jsonify({'message': 'Yangilik o`chirib tashlandi!'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@posts_bp.route('/api/posts/<int:post_id>/image', methods=['POST'])
+@token_required
+def upload_post_image(current_user_id, post_id):
+    if 'image' not in request.files:
+        return jsonify({'message': 'Rasm fayli topilmadi!'}), 400
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'message': 'Fayl tanlanmagan!'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'message': 'Faqat rasm fayllari ruxsat etilgan (png, jpg, jpeg, gif, webp)!'}), 400
+
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+    image_url = f"/uploads/{filename}"
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
+
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "UPDATE posts SET image_url = %s WHERE id = %s RETURNING id;",
+            (image_url, post_id)
+        )
+        updated = cur.fetchone()
+        conn.commit()
+
+        if not updated:
+            return jsonify({'message': 'Yangilik topilmadi!'}), 404
+
+        return jsonify({'message': 'Rasm muvaffaqiyatli yuklandi!', 'image_url': image_url}), 200
     except Exception as e:
         conn.rollback()
         return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500

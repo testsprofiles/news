@@ -6,8 +6,18 @@ from routes.category_routes import category_bp
 from routes.comment_routes import comment_bp
 from routes.page_routes import page_bp
 import os
+import uuid
 
 app = Flask(__name__)
+
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB limit
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 SWAGGER_URL = '/apidocs'
 API_URL = '/static/swagger.yaml'
