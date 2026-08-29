@@ -53,7 +53,6 @@ def create_comment(current_user):
     conn = get_db_connection()
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
-        
     cur = conn.cursor()
 
 
@@ -77,4 +76,5 @@ def create_comment(current_user):
     return jsonify({
         "message": "Izoh  saqlandi ", 
         "id": new_id
-    }), 201
+        
+    }), 201 
