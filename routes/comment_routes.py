@@ -76,5 +76,4 @@ def create_comment(current_user):
     return jsonify({
         "message": "Izoh  saqlandi ", 
         "id": new_id
-        
     }), 201 
