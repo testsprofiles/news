@@ -4,6 +4,8 @@ from utils.auth import token_required
 import psycopg2
 import psycopg2.extras
 import re
+from pydantic import ValidationError
+from schemas.category import CategoryCreate , CategoryUpdate
 
 
 category_bp = Blueprint('category', __name__)
@@ -30,11 +32,11 @@ def get_categories():
 @category_bp.route('/api/categories', methods=['POST'])
 @token_required
 def create_category(current_user_id):
-    data = request.get_json() or {}
-    name = data.get('name')
-
-    if not name:
-        return jsonify({'message': 'Kategoriya nomi (name) kiritilishi shart!'}), 400
+    try:
+        data = CategoryCreate(**(request.get_json() or {}))
+    except ValidationError as e:
+        return jsonify(e.errors()) ,  400 
+    name = data.name 
 
     conn = get_db_connection()
     if not conn:
@@ -80,11 +82,19 @@ def create_category(current_user_id):
 @category_bp.route('/api/categories/<int:cat_id>', methods=['PUT'])
 @token_required
 def update_category(current_user_id, cat_id):
-    data = request.get_json() or {}
-    name = data.get('name')
+
+    try:
+        data = CategoryUpdate(**(request.get_json() or {}))
+    except ValidationError as e :
+            return jsonify(e.errors()) , 400
+
+    name = data.name
 
     if not name:
-        return jsonify({'message': 'Kategoriya nomi kiritilishi shart!'}), 400
+        return jsonify ({'message' : 'kategorya nomi kiritilshi shart !'})
+
+
+
 
     conn = get_db_connection()
     if not conn:

@@ -5,6 +5,8 @@ from flask import current_app
 from database import get_db_connection
 from utils.auth import token_required
 import re
+from pydantic import ValidationError
+from schemas.post import PostCreate, PostUpdate
 
 posts_bp = Blueprint('posts', __name__)
 
@@ -92,13 +94,14 @@ def get_single_post(post_id):
 @posts_bp.route('/api/posts', methods=['POST'])
 @token_required
 def create_post(current_user_id):
-    data = request.get_json() or {}
-    title = str(data.get('title', '')).strip()
-    content = str(data.get('content', '')).strip()
-    category_id = data.get('category_id')
+    try:
+        data = PostCreate(**(request.get_json() or {}))
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
 
-    if not title or not content:
-        return jsonify({'message': 'Title va content bosh bolishi mumkin emas!'}), 400
+    title = data.title
+    content = data.content
+    category_id = data.category_id
 
     if category_id is not None and not isinstance(category_id, int):
         return jsonify({'message': 'category_id butun son bolishi kerak!'}), 400
@@ -141,10 +144,22 @@ def create_post(current_user_id):
 @posts_bp.route('/api/posts/<int:post_id>', methods=['PUT'])
 @token_required
 def update_post(current_user_id, post_id):
-    data = request.get_json() or {}
-    title = data.get('title')
-    content = data.get('content')
-    category_id = data.get('category_id')
+    try:
+        data = PostUpdate(**(request.get_json() or {}))
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+    name = data.name
+
+    if not name:
+        return jsonify({'message': 'kategoriya nomi kiritilishi shart!'}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
+
+    title = data.title
+    content = data.content
+    category_id = data.category_id
 
     conn = get_db_connection()
     if not conn:
