@@ -25,7 +25,10 @@ API_URL = '/static/swagger.yaml'
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
-    config={'app_name': "News Portal API"}
+    config={
+        'app_name': "News Portal API",
+        'persistAuthorization': True
+    }
 )
 
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)

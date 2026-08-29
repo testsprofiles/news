@@ -13,7 +13,7 @@ if not SECRET_KEY:
 def create_token(user_id, role="admin"):
    
     payload = {
-        'user_id': user_id,
+    'user_id': user_id,
     'role': role,
     'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)    }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")

@@ -10,6 +10,29 @@ servers:
     
 
 paths:
+  /auth/register:
+    post:
+      summary: Ro'yxatdan o'tish
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "admin"
+                password:
+                  type: string
+                  example: "mypassword123"
+      responses:
+        '201':
+          description: Muvaffaqiyatli ro'yxatdan o'tildi
+        '400':
+          description: Username band yoki malumotlar notogri
+        '500':
+          description: Baza bilan ulanishda xatolik
   /auth/login:
     post:
       summary: Kirish , Token olish
@@ -67,8 +90,24 @@ paths:
           required: false
           schema:
             type: string
-          example: "nmadr"
+          example: "sun"
           description: "Title shu qiymat bilan boshlanadigan postlarni qaytaradi (prefix bo'yicha, katta-kichik harf farqsiz)"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          example: 1
+          description: "Sahifa raqami"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+          example: 10
+          description: "Bitta sahifada nechta post qaytarilishi"
       responses:
         '200':
           description: Yangiliklar roixati
@@ -95,6 +134,21 @@ paths:
       responses:
         '201':
           description: Yangilik yaratildi
+  /api/posts/{postId}:
+    get:
+      summary: Bitta yangilikni (va uning commentlarini) olish
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Post ma'lumotlari, image_url, comments va comment_count bilan
+        '404':
+          description: Post topilmadi  
   /api/posts/{postId}/image:
     post:
       summary: Postga rasm yuklash
@@ -124,6 +178,7 @@ paths:
           description: Fayl notogri yoki topilmagan
         '404':
           description: Post topilmadi
+
 
   /api/pages:
     get:

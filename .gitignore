@@ -11,7 +11,7 @@ venv/
 ENV/
 env/
 env.bak/
-venv.bak/find . -type d -name "__pycache__" -exec rm -r {} +
+venv.bak/
 
 # --- Maxfiy sozlamalar va kalitlar (Juda muhim!) ---
 .env
@@ -21,10 +21,13 @@ venv.bak/find . -type d -name "__pycache__" -exec rm -r {} +
 *.key
 
 # --- Baza va lokal ma'lumotlar ---
-
 *.sqlite3
 *.db
 *.log
+
+# --- Yuklangan fayllar ---
+uploads/*
+!uploads/.gitkeep
 
 # --- Muharrir (IDE) va Operatsion tizim fayllari ---
 .vscode/
@@ -37,4 +40,4 @@ Thumbs.db
 # --- Test va Coverage fayllari ---
 .pytest_cache/
 .coverage
-htmlcov/yoyo.ini
+htmlcov/

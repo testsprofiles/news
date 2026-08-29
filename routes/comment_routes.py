@@ -9,7 +9,6 @@ def get_comments():
     conn = get_db_connection()
     if not conn:                                              
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500  
-    conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT id, post_id, text FROM comments;")
     comments = cur.fetchall()
@@ -29,10 +28,7 @@ def get_comments():
 
 @comment_bp.route('/api/comments', methods=['POST'])
 @token_required
-def create_comment(current_user):
-    conn = get_db_connection()
-    if not conn:                                             
-        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500  
+def create_comment(current_user): 
     data = request.get_json() or {}
     post_id = data.get('post_id')
     text = data.get('text')
@@ -55,6 +51,9 @@ def create_comment(current_user):
         return jsonify({"error": " Maksimal 1000 ta belgi ruxsat etilgan."}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
+        
     cur = conn.cursor()
 
 

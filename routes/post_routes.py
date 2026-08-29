@@ -17,6 +17,9 @@ def allowed_file(filename):
 @posts_bp.route('/api/posts', methods=['GET'])
 def get_posts():
     title_filter = request.args.get('title')
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 10, type=int)
+    offset = (page - 1) * limit
 
     conn = get_db_connection()
     if not conn:
@@ -32,13 +35,14 @@ def get_posts():
                 return jsonify({"error": "title parametri 3 ta harfdan oshmasligi kerak"}), 400
             cur.execute(
                 "SELECT id, title, content, category_id, image_url, created_at FROM posts "
-                "WHERE title ~* %s ORDER BY created_at DESC;",
-                (r'\m' + re.escape(title_filter),)
+                "WHERE title ~* %s ORDER BY created_at DESC LIMIT %s OFFSET %s;",
+                (r'\m' + re.escape(title_filter), limit, offset)
             )
         else:
             cur.execute(
                 "SELECT id, title, content, category_id, image_url, created_at FROM posts "
-                "ORDER BY created_at DESC;"
+                "ORDER BY created_at DESC LIMIT %s OFFSET %s;",
+                (limit, offset)
             )
         posts = cur.fetchall()
         return jsonify(posts), 200
@@ -98,6 +102,18 @@ def create_post(current_user_id):
 
     if category_id is not None and not isinstance(category_id, int):
         return jsonify({'message': 'category_id butun son bolishi kerak!'}), 400
+    if category_id is not None:
+        conn_check = get_db_connection()
+        if not conn_check:
+            return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
+        cur_check = conn_check.cursor()
+        cur_check.execute("SELECT id FROM categories WHERE id = %s;", (category_id,))
+        exists = cur_check.fetchone()
+        cur_check.close()
+        conn_check.close()
+        if not exists:
+            return jsonify({'message': 'Bunday category_id mavjud emas!'}), 400
+
 
     conn = get_db_connection()
     if not conn:
@@ -186,18 +202,25 @@ def upload_post_image(current_user_id, post_id):
 
     if not allowed_file(file.filename):
         return jsonify({'message': 'Faqat rasm fayllari ruxsat etilgan (png, jpg, jpeg, gif, webp)!'}), 400
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
+    cur = conn.cursor()
+    cur.execute("SELECT image_url FROM posts WHERE id = %s;", (post_id,))
+    existing = cur.fetchone()
+    if not existing:
+        cur.close()
+        conn.close()
+        return jsonify({'message': 'Yangilik topilmadi!'}), 404
+    old_image_url = existing['image_url']
     ext = file.filename.rsplit('.', 1)[1].lower()
     filename = f"{uuid.uuid4().hex}.{ext}"
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
     image_url = f"/uploads/{filename}"
 
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
-    cur = conn.cursor()
     try:
         cur.execute(
             "UPDATE posts SET image_url = %s WHERE id = %s RETURNING id;",
@@ -208,7 +231,10 @@ def upload_post_image(current_user_id, post_id):
 
         if not updated:
             return jsonify({'message': 'Yangilik topilmadi!'}), 404
-
+        if old_image_url:
+            old_filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], os.path.basename(old_image_url))
+            if os.path.exists(old_filepath):
+                os.remove(old_filepath)
         return jsonify({'message': 'Rasm muvaffaqiyatli yuklandi!', 'image_url': image_url}), 200
     except Exception as e:
         conn.rollback()

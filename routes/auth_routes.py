@@ -2,9 +2,34 @@ from flask import Blueprint, request, jsonify
 from database import db_cursor
 from utils.auth import create_token
 import bcrypt
+import psycopg2
 
 auth_bp = Blueprint('auth', __name__)
-   
+
+@auth_bp.route('/auth/register', methods=['POST'])
+def auth_register():
+    data = request.get_json() or {}
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({'message': 'Username va password kiritilishi shart!'}), 400
+
+    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    try:
+        with db_cursor(commit=True) as cur:
+            cur.execute(
+                "INSERT INTO users (username, password, role) VALUES (%s, %s, %s) RETURNING id;",
+                (username, hashed, 'admin')
+            )
+            new_user = cur.fetchone()
+    except ConnectionError:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
+    except psycopg2.errors.UniqueViolation:
+        return jsonify({'message': 'Bu username allaqachon band!'}), 400
+
+    return jsonify({'message': 'Royxatdan otildi!', 'id': new_user['id']}), 201
 @auth_bp.route('/auth/login', methods=['POST'])
 def auth_login():
    
