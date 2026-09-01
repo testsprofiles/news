@@ -7,12 +7,15 @@ info:
 servers:
   - url: http://127.0.0.1:5000
     description: Lokal server
+ 
     
 
 paths:
   /auth/register:
     post:
       summary: Ro'yxatdan o'tish
+      tags:
+        - AUTH 
       requestBody:
         required: true
         content:
@@ -36,6 +39,8 @@ paths:
   /auth/login:
     post:
       summary: Kirish , Token olish
+      tags:
+        - AUTH
       requestBody:
         required: true
         content:
@@ -56,11 +61,15 @@ paths:
   /api/categories:
     get:
       summary: Barcha kategoryalarni olish
+      tags:
+        - CATEGORIES
       responses:
         '200':
           description: Kategoriyalar ro'yxati
     post:
       summary: Yangi kategorya yaratish
+      tags:
+        - CATEGORIES
       security:
         - Bearer: []
       requestBody:
@@ -84,6 +93,8 @@ paths:
   /api/posts:
     get:
       summary: Barcha yangiliklarni olish
+      tags:
+        - POSTS 
       parameters:
         - name: title
           in: query
@@ -113,6 +124,8 @@ paths:
           description: Yangiliklar roixati
     post:
       summary: Yangi yangilik qoshish
+      tags:
+        - POSTS
       security:
         - Bearer: []
       requestBody:
@@ -134,9 +147,47 @@ paths:
       responses:
         '201':
           description: Yangilik yaratildi
+  /api/posts/{post_id}:
+    put:
+      summary: Postni tahrirlash
+      tags:
+        - POSTS
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: post_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                category_id:
+                  type: integer
+      responses:
+        '200':
+          description: Post muvaffaqiyatli yangilandi
+        '400':
+          description: Noto'g'ri so'rov
+        '404':
+          description: Post topilmadi
+        '401':
+          description: Token yo'q yoki noto'g'ri
+              
   /api/posts/{postId}:
     get:
       summary: Bitta yangilikni (va uning commentlarini) olish
+      tags:
+        - POSTS
       parameters:
         - name: postId
           in: path
@@ -152,6 +203,8 @@ paths:
   /api/posts/{postId}/image:
     post:
       summary: Postga rasm yuklash
+      tags:
+        - POSTS
       security:
         - Bearer: []
       parameters:
@@ -183,11 +236,15 @@ paths:
   /api/pages:
     get:
       summary: Barcha sahifani olish
+      tags:
+        - PAGES
       responses:
         '200':
           description: Sahifa ro'yxati qaytdi
     post:
       summary: Yangi sahifa yaratish
+      tags:
+        - PAGES
       security:
         - Bearer: []
       requestBody:
@@ -215,15 +272,56 @@ paths:
           description: Sahifa yaratildi
         '400':
           description: Ma'lumotlar  togri emas
-
+  /api/pages/{page_id}:
+    put:
+      tags:
+        - PAGES
+      summary: Sahifani tahrirlash
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: page_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Yangilangan sarlavha"
+                content:
+                  type: string
+                  example: "Yangilangan matn..."
+                slug:
+                  type: string
+                  example: "yangilangan-slug"
+      responses:
+        '200':
+          description: Sahifa muvaffaqiyatli yangilandi
+        '400':
+          description: Noto'g'ri so'rov yoki slug band
+        '404':
+          description: Sahifa topilmadi
+        '401':
+          description: Token yo'q yoki noto'g'ri  
   /api/comments:
     get:
       summary: Barcha izohlarni olish
+      tags:
+        - COMMENTS
       responses:
         '200':
           description: Izohlar ro'yxati qaytdi
     post:
       summary: Postga yangi izoh qo'shish
+      tags:
+        - COMMENTS
       security:              
         - Bearer: []
       requestBody:

@@ -12,6 +12,7 @@ posts_bp = Blueprint('posts', __name__)
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -30,32 +31,34 @@ def get_posts():
     cur = conn.cursor()
     try:
         if title_filter:
-
             if any(ch.isdigit() for ch in title_filter):
                 return jsonify({"error": "title parametrida raqam bo'lishi mumkin emas"}), 400
             if len(title_filter) > 3:
                 return jsonify({"error": "title parametri 3 ta harfdan oshmasligi kerak"}), 400
             cur.execute(
-                "SELECT id, title, content, category_id, image_url, created_at FROM posts "
-                "WHERE title ~* %s ORDER BY created_at DESC LIMIT %s OFFSET %s;",
-                (r'\m' + re.escape(title_filter), limit, offset)
+                "SELECT p.id, p.title, p.content, p.category_id, c.name AS category_name, "
+                "p.image_url, p.created_at FROM posts p "
+                "LEFT JOIN categories c ON p.category_id = c.id "
+                "WHERE p.title ~* %s ORDER BY p.created_at DESC LIMIT %s OFFSET %s;",
+                (title_filter, limit, offset)
             )
         else:
             cur.execute(
-                "SELECT id, title, content, category_id, image_url, created_at FROM posts "
-                "ORDER BY created_at DESC LIMIT %s OFFSET %s;",
+                "SELECT p.id, p.title, p.content, p.category_id, c.name AS category_name, "
+                "p.image_url, p.created_at FROM posts p "
+                "LEFT JOIN categories c ON p.category_id = c.id "
+                "ORDER BY p.created_at DESC LIMIT %s OFFSET %s;",
                 (limit, offset)
             )
         posts = cur.fetchall()
         return jsonify(posts), 200
 
-
     except Exception as e:
-        conn.rollback() 
+        conn.rollback()
         return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
 
     finally:
-        cur.close()  
+        cur.close()
         conn.close()
 
 
@@ -67,7 +70,7 @@ def get_single_post(post_id):
 
     cur = conn.cursor()
     cur.execute("""
-        SELECT p.id, p.title, p.content, p.image_url, p.created_at, c.name as category_name 
+        SELECT p.id, p.title, p.content, p.image_url, p.created_at, c.name as category_name
         FROM posts p
         LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.id = %s;
@@ -105,6 +108,7 @@ def create_post(current_user_id):
 
     if category_id is not None and not isinstance(category_id, int):
         return jsonify({'message': 'category_id butun son bolishi kerak!'}), 400
+
     if category_id is not None:
         conn_check = get_db_connection()
         if not conn_check:
@@ -116,7 +120,6 @@ def create_post(current_user_id):
         conn_check.close()
         if not exists:
             return jsonify({'message': 'Bunday category_id mavjud emas!'}), 400
-
 
     conn = get_db_connection()
     if not conn:
@@ -141,6 +144,7 @@ def create_post(current_user_id):
         cur.close()
         conn.close()
 
+
 @posts_bp.route('/api/posts/<int:post_id>', methods=['PUT'])
 @token_required
 def update_post(current_user_id, post_id):
@@ -148,37 +152,60 @@ def update_post(current_user_id, post_id):
         data = PostUpdate(**(request.get_json() or {}))
     except ValidationError as e:
         return jsonify(e.errors()), 400
-    name = data.name
-
-    if not name:
-        return jsonify({'message': 'kategoriya nomi kiritilishi shart!'}), 400
-
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
 
     title = data.title
     content = data.content
     category_id = data.category_id
 
+    if title is None and content is None and category_id is None:
+        return jsonify({'message': 'Kamida bitta maydon yuborilishi kerak!'}), 400
+
+    if category_id is not None:
+        conn_check = get_db_connection()
+        if not conn_check:
+            return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
+        cur_check = conn_check.cursor()
+        cur_check.execute("SELECT id FROM categories WHERE id = %s;", (category_id,))
+        exists = cur_check.fetchone()
+        cur_check.close()
+        conn_check.close()
+        if not exists:
+            return jsonify({'message': 'Bunday category_id mavjud emas!'}), 400
+
     conn = get_db_connection()
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
-
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE posts SET title = %s, content = %s, category_id = %s WHERE id = %s RETURNING id;",
-        (title, content, category_id, post_id)
-    )
-    updated_post = cur.fetchone()
-    conn.commit()
-    cur.close()
-    conn.close()
 
-    if not updated_post:
-        return jsonify({'message': 'Yangilik topilmadi!'}), 404
+    try:
+        fields = []
+        values = []
+        if title is not None:
+            fields.append("title = %s")
+            values.append(title)
+        if content is not None:
+            fields.append("content = %s")
+            values.append(content)
+        if category_id is not None:
+            fields.append("category_id = %s")
+            values.append(category_id)
 
-    return jsonify({'message': 'Yangilik muvaffaqiyatli yangilandi!'}), 200
+        values.append(post_id)
+        query = f"UPDATE posts SET {', '.join(fields)} WHERE id = %s RETURNING id;"
+        cur.execute(query, values)
+        updated_post = cur.fetchone()
+        conn.commit()
+
+        if not updated_post:
+            return jsonify({'message': 'Yangilik topilmadi!'}), 404
+
+        return jsonify({'message': 'Yangilik muvaffaqiyatli yangilandi!'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+    finally:
+        cur.close()
+        conn.close()
 
 
 @posts_bp.route('/api/posts/<int:post_id>', methods=['DELETE'])
@@ -205,6 +232,7 @@ def delete_post(current_user_id, post_id):
         cur.close()
         conn.close()
 
+
 @posts_bp.route('/api/posts/<int:post_id>/image', methods=['POST'])
 @token_required
 def upload_post_image(current_user_id, post_id):
@@ -217,6 +245,7 @@ def upload_post_image(current_user_id, post_id):
 
     if not allowed_file(file.filename):
         return jsonify({'message': 'Faqat rasm fayllari ruxsat etilgan (png, jpg, jpeg, gif, webp)!'}), 400
+
     conn = get_db_connection()
     if not conn:
         return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
@@ -228,13 +257,13 @@ def upload_post_image(current_user_id, post_id):
         cur.close()
         conn.close()
         return jsonify({'message': 'Yangilik topilmadi!'}), 404
+
     old_image_url = existing['image_url']
     ext = file.filename.rsplit('.', 1)[1].lower()
     filename = f"{uuid.uuid4().hex}.{ext}"
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
     image_url = f"/uploads/{filename}"
-
 
     try:
         cur.execute(
@@ -246,10 +275,12 @@ def upload_post_image(current_user_id, post_id):
 
         if not updated:
             return jsonify({'message': 'Yangilik topilmadi!'}), 404
+
         if old_image_url:
             old_filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], os.path.basename(old_image_url))
             if os.path.exists(old_filepath):
                 os.remove(old_filepath)
+
         return jsonify({'message': 'Rasm muvaffaqiyatli yuklandi!', 'image_url': image_url}), 200
     except Exception as e:
         conn.rollback()
