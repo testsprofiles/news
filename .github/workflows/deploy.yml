@@ -18,6 +18,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ${{ secrets.PROJECT_PATH }}
+            git pull origin master
             /var/www/news/venv/bin/python -m pytest
   deploy:
     runs-on: ubuntu-latest
