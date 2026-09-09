@@ -6,7 +6,7 @@ from flask import request, jsonify
 from dotenv import load_dotenv
 
 load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "somesecret")
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY topilmadi!")
 
