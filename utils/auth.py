@@ -6,8 +6,9 @@ from flask import request, jsonify
 from dotenv import load_dotenv
 
 load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY", "somesecret")
+SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
+    SECRET_KEY = "Default"
     raise RuntimeError("SECRET_KEY topilmadi!")
 
 def create_token(user_id, role="admin"):
