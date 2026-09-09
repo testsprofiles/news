@@ -8,7 +8,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    env:
+      SECRET_KEY: "test_secret_key_for_github_actions"
     steps:
       - name: Run test cases
         uses: appleboy/ssh-action@v1.0.3
