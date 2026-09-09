@@ -9,7 +9,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     SECRET_KEY = "Default"
-    raise RuntimeError("SECRET_KEY topilmadi!")
+    # raise RuntimeError("SECRET_KEY topilmadi!")
 
 def create_token(user_id, role="admin"):
    
