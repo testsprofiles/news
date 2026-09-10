@@ -5,8 +5,10 @@ from routes.post_routes import posts_bp
 from routes.category_routes import category_bp
 from routes.comment_routes import comment_bp
 from routes.page_routes import page_bp
+from routes.product_routes import products_bp
 import os
 import uuid
+
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -34,6 +36,7 @@ app.register_blueprint(posts_bp)
 app.register_blueprint(category_bp)
 app.register_blueprint(comment_bp)
 app.register_blueprint(page_bp)
+app.register_blueprint(products_bp)             
 
 
 @app.route('/', methods=['GET'])
@@ -48,4 +51,3 @@ if __name__ == '__main__':
     debug_mode = os.getenv("FLASK_DEBUG", "False") == "True"
     app.run(debug=debug_mode, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
 
-#qwertyuiuytrewqwer789trewertyui
