@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory
-from flask_swagger_ui import get_swaggerui_blueprint
+from flasgger import Swagger
 from routes.auth_routes import auth_bp
 from routes.post_routes import posts_bp
 from routes.category_routes import category_bp
@@ -9,6 +9,8 @@ import os
 import uuid
 
 app = Flask(__name__)
+swagger = Swagger(app)
+
 
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -19,19 +21,7 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB limit
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-SWAGGER_URL = '/apidocs'
-API_URL = '/static/swagger.yaml'
 
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,
-    API_URL,
-    config={
-        'app_name': "News Portal API",
-        'persistAuthorization': True
-    }
-)
-
-app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 
 @app.route('/static/swagger.yaml')
