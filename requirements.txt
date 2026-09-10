@@ -21,3 +21,4 @@ six==1.17.0
 Werkzeug==3.1.8
 yoyo-migrations
 psycopg2-binary
+pytest
