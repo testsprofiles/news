@@ -64,6 +64,7 @@ def create_comment(current_user):
         return jsonify({"error": f"{post_id} -id li  post topilmadi!"}), 404
 
 
+
     cur.execute(
         "insert into comments (post_id, text) values (%s, %s) returning id;",
         (post_id, text)
