@@ -24,7 +24,7 @@ jobs:
           pip install -r requirements.txt
 
         env:
-          SECRET_KEY: test-secret-key-for-ci
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
         run: pytest
 
   deploy:
@@ -43,7 +43,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            cd /path/to/your/project
+            cd ${{ secrets.PROJECT_PATH }}
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt
