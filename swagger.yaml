@@ -347,9 +347,139 @@ paths:
           description:  matn yoki post_id notori
         '404':
           description: post topilmadi
+      
+  /api/products:
+    get:
+      summary: Barcha mahsulotlarni olish
+      tags:
+        - PRODUCTS
+      responses:
+        '200':
+          description: Mahsulotlar ro'yxati qaytdi
+    post:
+      summary: Yangi mahsulot yaratish
+      tags:
+        - PRODUCTS
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - price
+                - category_id
+              properties:
+                name:
+                  type: string
+                  example: "iPhone 15"
+                description:
+                  type: string
+                  example: "Yangi model smartfon"
+                price:
+                  type: number
+                  example: 999.99
+                category_id:
+                  type: integer
+                  example: 1
+      responses:
+        '201':
+          description: Mahsulot yaratildi
+        '400':
+          description: Validatsiya xatosi yoki category_id mavjud emas
+        '401':
+          description: Token yo'q yoki noto'g'ri
+  /api/products/{product_id}:
+    get:
+      summary: Bitta mahsulotni olish
+      tags:
+        - PRODUCTS
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Mahsulot ma'lumotlari (id, name, description, price, image, category)
+        '404':
+          description: Mahsulot topilmadi
+    put:
+      summary: Mahsulotni tahrirlash
+      tags:
+        - PRODUCTS
+      security:
+        - Bearer: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                category_id:
+                  type: integer
+      responses:
+        '200':
+          description: Mahsulot muvaffaqiyatli yangilandi
+        '400':
+          description: Noto'g'ri so'rov
+        '404':
+          description: Mahsulot topilmadi
+        '401':
+          description: Token yo'q yoki noto'g'ri
+  /api/products/{product_id}/image:
+    post:
+      summary: Mahsulotga rasm yuklash
+      tags:
+        - PRODUCTS
+      security:
+        - Bearer: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Rasm muvaffaqiyatli yuklandi
+        '400':
+          description: Fayl noto'g'ri yoki topilmagan
+        '404':
+          description: Mahsulot topilmadi
 components:
   securitySchemes:
     Bearer:
       type: http
       scheme: bearer
-      bearerFormat: JWT      
+      bearerFormat: JWT

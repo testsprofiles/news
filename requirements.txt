@@ -23,4 +23,5 @@ yoyo-migrations
 psycopg2-binary
 pytest
 pydantic
+flask-swagger-ui
 

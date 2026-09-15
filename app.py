@@ -1,5 +1,5 @@
 from flask import Flask, send_from_directory
-from flasgger import Swagger
+from flask_swagger_ui import get_swaggerui_blueprint
 from routes.auth_routes import auth_bp
 from routes.post_routes import posts_bp
 from routes.category_routes import category_bp
@@ -11,8 +11,19 @@ import uuid
 
 
 app = Flask(__name__)
-swagger = Swagger(app)
 
+SWAGGER_URL = '/apidocs'
+API_URL = '/static/swagger.yaml'
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': "News Portal API",
+        'persistAuthorization': True
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
