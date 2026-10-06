@@ -57,6 +57,12 @@ def send_welcome(message):
     # /start raised "name 'ReplyKeyboardMarkup' is not defined".
     from telebot.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
+    logger.info(
+        "/start received (chat_id=%s, user=%s)",
+        getattr(message.chat, "id", "?"),
+        getattr(message.from_user, "first_name", "?"),
+    )
+
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     
     if WEBAPP_URL:
@@ -76,6 +82,8 @@ def send_help(message):
     """
     /help buyrug'i uchun javob
     """
+    logger.info("/help received (chat_id=%s)", getattr(message.chat, "id", "?"))
+
     help_text = (
         "Bot imkoniyatlari:\n"
         "- /start - Botni ishga tushirish va menyuni ochish\n"
