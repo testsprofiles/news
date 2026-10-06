@@ -12,8 +12,16 @@ const _setToken = (token) => {
   try { localStorage.setItem('token', token); } catch (e) {}
 };
 
+// ngrok's free tier answers browser-like requests with an interstitial page
+// (ERR_NGROK_6024). This header makes it pass the request straight through, so
+// the same build works both directly and through an ngrok tunnel.
+const NGROK_SKIP_HEADER = 'ngrok-skip-browser-warning';
+
 const _headers = () => {
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = {
+    'Content-Type': 'application/json',
+    [NGROK_SKIP_HEADER]: '1',
+  };
   const token = _getToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;

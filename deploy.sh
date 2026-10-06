@@ -234,10 +234,10 @@ else
 fi
 
 # --- 7/7  Health check -------------------------------------------------------
-log "[7/7] Waiting for the app on http://127.0.0.1:${PORT}/ ..."
+log "[7/7] Waiting for the app on http://127.0.0.1:${PORT}/health ..."
 HEALTHY=0
 for _ in $(seq 1 30); do
-    if http_ok "http://127.0.0.1:${PORT}/"; then
+    if http_ok "http://127.0.0.1:${PORT}/health"; then
         HEALTHY=1
         break
     fi

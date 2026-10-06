@@ -380,7 +380,10 @@ postForm.addEventListener('submit', async (e) => {
       try {
         const uploadRes = await fetch('/api/posts/' + newId + '/image', {
           method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + api.getToken() },
+          headers: {
+            'Authorization': 'Bearer ' + api.getToken(),
+            'ngrok-skip-browser-warning': '1'
+          },
           body: formData
         });
         const uploadData = await uploadRes.json().catch(() => ({}));

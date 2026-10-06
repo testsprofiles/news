@@ -202,11 +202,48 @@ def test_login_db_connection_error(mock_db_cursor, client):
 # --------------------------------------------------------------------------- #
 # API index / swagger / static uploads
 # --------------------------------------------------------------------------- #
-def test_api_root(client):
-    resp = client.get("/")
+def test_health_endpoint(client):
+    resp = client.get("/health")
 
     assert resp.status_code == 200
     assert resp.get_json()["status"] == "active"
+
+
+def test_web_app_root_serves_the_portal(client):
+    """The bot's WebApp button opens `/`; it must be the portal, not status JSON."""
+    resp = client.get("/")
+
+    assert resp.status_code == 200
+    assert "html" in resp.mimetype
+    assert b"Yangiliklar Portali" in resp.data
+    assert b"js/main.js" in resp.data
+    resp.close()
+
+
+@pytest.mark.parametrize("page", ["index.html", "login.html", "post.html", "admin.html", "page.html"])
+def test_frontend_pages_are_served(client, page):
+    resp = client.get(f"/{page}")
+
+    assert resp.status_code == 200
+    assert "html" in resp.mimetype
+    assert b"<html" in resp.data.lower()
+    resp.close()
+
+
+@pytest.mark.parametrize("asset", ["api.js", "main.js", "auth.js", "post.js", "admin.js", "page.js"])
+def test_frontend_js_is_served(client, asset):
+    resp = client.get(f"/js/{asset}")
+
+    assert resp.status_code == 200
+    assert "javascript" in resp.mimetype
+    assert resp.data
+    resp.close()
+
+
+def test_unknown_frontend_page_is_rejected(client):
+    """The static route must be an allow-list, not an open file reader."""
+    assert client.get("/secrets.html").status_code == 404
+    assert client.get("/dostuff.html").status_code == 404
 
 
 def test_swagger_yaml_is_served(client):
