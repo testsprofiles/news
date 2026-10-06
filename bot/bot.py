@@ -30,7 +30,19 @@ if BOT_TOKEN:
     _setup_bot()
 
 
-@bot.message_handler(commands=["start"])
+def _ensure_bot():
+    if bot is None:
+        raise RuntimeError("Bot tokeni yo'q, @bot.message_handler decoratorlari qo'llanilmaydi")
+
+
+def bot_message_handler(*args, **kwargs):
+    """Guard that raises only if bot is None when decorator is invoked."""
+    def decorator(func):
+        _ensure_bot()
+        return bot.message_handler(*args, **kwargs)(func)
+    return decorator
+
+
 def send_welcome(message):
     """
     /start buyrug'i kelganda foydalanuvchiga salomlashish xabari
@@ -51,7 +63,6 @@ def send_welcome(message):
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup)
 
 
-@bot.message_handler(commands=["help"])
 def send_help(message):
     """
     /help buyrug'i uchun javob
@@ -63,6 +74,11 @@ def send_help(message):
         "Shuningdek, yangi yangiliklar e'lon qilinganda ushbu bot orqali bildirishnoma olasiz."
     )
     bot.send_message(message.chat.id, help_text)
+
+
+if BOT_TOKEN:
+    bot.message_handler(commands=["start"])(send_welcome)
+    bot.message_handler(commands=["help"])(send_help)
 
 
 def start_bot():

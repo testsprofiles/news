@@ -21,6 +21,12 @@ venv.bak/
 *.pem
 *.key
 
+# --- Loyiha jurnali (HECH QACHON push qilinmaydi!) ---
+CHANGELOG_JOURNAL.txt
+
+# --- .gitignore o'zi va boshqa texnik loglar push qilinmaydi ---
+CHANGELOG_JOURNAL.txt
+
 # --- Baza va lokal ma'lumotlar ---
 *.sqlite3
 *.db
