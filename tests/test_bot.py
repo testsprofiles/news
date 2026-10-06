@@ -1,0 +1,54 @@
+"""Tests for bot/bot.py startup behaviour.
+
+The module deliberately tolerates a missing token and transient Telegram API
+errors - these tests lock that behaviour in without any network access.
+"""
+
+import logging
+
+import pytest
+
+import bot.bot as bot_module
+
+
+def test_start_bot_without_token_returns(monkeypatch, caplog):
+    monkeypatch.setattr(bot_module, "bot", None)
+
+    with caplog.at_level(logging.ERROR):
+        bot_module.start_bot()
+
+    assert "ishga tushmadi" in caplog.text
+
+
+def test_start_bot_retries_after_error(monkeypatch):
+    calls = {"poll": 0}
+
+    def flaky_polling(**kwargs):
+        calls["poll"] += 1
+        if calls["poll"] == 1:
+            raise RuntimeError("boom")
+
+    fake_bot = type("FakeBot", (), {"infinity_polling": staticmethod(flaky_polling)})()
+    monkeypatch.setattr(bot_module, "bot", fake_bot)
+    monkeypatch.setattr(bot_module.time, "sleep", lambda _seconds: None)
+
+    bot_module.start_bot()
+
+    assert calls["poll"] == 2
+
+
+def test_start_bot_stops_on_keyboard_interrupt(monkeypatch):
+    def interrupt(**kwargs):
+        raise KeyboardInterrupt
+
+    fake_bot = type("FakeBot", (), {"infinity_polling": staticmethod(interrupt)})()
+    monkeypatch.setattr(bot_module, "bot", fake_bot)
+
+    bot_module.start_bot()  # must not propagate
+
+
+def test_bot_message_handler_requires_token(monkeypatch):
+    monkeypatch.setattr(bot_module, "bot", None)
+
+    with pytest.raises(RuntimeError):
+        bot_module.bot_message_handler(commands=["start"])(lambda message: None)

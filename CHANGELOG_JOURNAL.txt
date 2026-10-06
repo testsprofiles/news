@@ -1,2 +1,0 @@
-2026-10-06 15:10:00 - [FIX] - [bot/bot.py: guarded bot decorator applied only when BOT_TOKEN is set to prevent AttributeError on import. If BOT_TOKEN missing, bot stays None, login/logic skips, start_bot logs error and returns.]
-2026-10-06 15:11:00 - [FIX] - [Verified: BOT_TOKEN= python bot/bot.py exits cleanly with warning and error log, no crash. pytest 0 errors. Commit will be pushed without Co-Authored-By.]

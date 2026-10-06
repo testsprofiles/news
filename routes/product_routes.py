@@ -87,6 +87,8 @@ def create_product(current_user_id):
         return jsonify(e.errors()), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
     cur = conn.cursor()
     cur.execute("SELECT id FROM categories WHERE id = %s;", (data.category_id,))
     if not cur.fetchone():
@@ -121,6 +123,8 @@ def upload_product_image(current_user_id, product_id):
         return jsonify({'message': 'Fayl noto`g`ri yoki tanlanmagan!'}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
     cur = conn.cursor()
     cur.execute("SELECT id FROM products WHERE id = %s;", (product_id,))
     if not cur.fetchone():
@@ -160,6 +164,8 @@ def update_product(current_user_id, product_id):
         return jsonify({'message': 'Kamida bitta maydon yuborilishi kerak!'}), 400
 
     conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'Baza bilan ulanishda xatolik!'}), 500
     cur = conn.cursor()
 
     if 'category_id' in fields:

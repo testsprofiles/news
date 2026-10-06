@@ -25,6 +25,9 @@ pytest
 pydantic
 flask-swagger-ui
 
+# Production WSGI server
+gunicorn
+
 # Telegram bot dependencies
 requests
 pyTelegramBotAPI

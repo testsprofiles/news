@@ -1,5 +1,7 @@
 import os
 import logging
+import time
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -93,7 +95,16 @@ def start_bot():
         return
     
     logger.info("Telegram bot ishga tushdi...")
-    bot.infinity_polling(skip_pending=True)
+    while True:
+        try:
+            bot.infinity_polling(skip_pending=True)
+            break
+        except KeyboardInterrupt:
+            logger.info("Bot to'xtatildi.")
+            break
+        except Exception as exc:  # noqa: BLE001 - keep the bot alive on API/network faults
+            logger.error("Bot polling xatosi: %s. 5 soniyadan so'ng qayta urinish...", exc)
+            time.sleep(5)
 
 
 if __name__ == "__main__":

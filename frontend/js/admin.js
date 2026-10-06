@@ -251,15 +251,8 @@ categoriesTableBody.addEventListener('click', async (e) => {
   if (editBtn) {
     const id = editBtn.dataset.id;
     if (!id) return;
-    try {
-      const res = await api.get('/api/categories/' + id);
-      if (res && (res.id || res.name)) {
-        const name = res.name || (res.category && res.category.name) || '';
-        openCategoryModal({ id: res.id, name });
-      }
-    } catch (e) {
-      showToast('Ma\'lumot olinmadi', 'error');
-    }
+    // The API has no GET /api/categories/<id>; the row already carries the data.
+    openCategoryModal({ id, name: editBtn.dataset.name || '' });
   }
   const delBtn = e.target.closest('.delete-category-btn');
   if (delBtn) {

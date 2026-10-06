@@ -91,10 +91,7 @@ def update_category(current_user_id, cat_id):
     name = data.name
 
     if not name:
-        return jsonify ({'message' : 'kategorya nomi kiritilshi shart !'})
-
-
-
+        return jsonify({'message': 'kategorya nomi kiritilshi shart !'}), 400
 
     conn = get_db_connection()
     if not conn:
@@ -163,8 +160,3 @@ def delete_category(current_user_id, cat_id):
     finally:
         cur.close()
         conn.close()
-    if not deleted:
-        return jsonify({'message': 'Kategoriya topilmadi!'}), 404
-
-    return jsonify({'message': 'Kategoriya o`chirib tashlandi!'}), 200
-    

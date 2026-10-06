@@ -140,10 +140,6 @@ const loadPosts = async (page = 1, replace = true) => {
   }
 };
 
-$(document).addEventListener('elementoftab_clicked', (e) => {
-  // noop placeholder for earlier tab logic reuse if needed
-});
-
 prevBtn.addEventListener('click', () => loadPosts(currentPage - 1));
 nextBtn.addEventListener('click', () => loadPosts(currentPage + 1));
 

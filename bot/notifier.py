@@ -1,5 +1,10 @@
 import os
+
 import requests
+from dotenv import load_dotenv
+
+# Allow the notifier to be used standalone (bot polling, scripts, tests).
+load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
