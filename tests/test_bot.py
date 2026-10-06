@@ -52,3 +52,34 @@ def test_bot_message_handler_requires_token(monkeypatch):
 
     with pytest.raises(RuntimeError):
         bot_module.bot_message_handler(commands=["start"])(lambda message: None)
+
+
+def test_send_welcome_builds_webapp_keyboard(monkeypatch):
+    """Regression: /start used to crash because the keyboard types were
+    imported inside a different function (local scope)."""
+    import types
+
+    sent = {}
+
+    class FakeBot:
+        def send_message(self, chat_id, text, **kwargs):
+            sent["chat_id"] = chat_id
+            sent["text"] = text
+            sent["markup"] = kwargs.get("reply_markup")
+
+    monkeypatch.setattr(bot_module, "bot", FakeBot())
+    monkeypatch.setattr(bot_module, "WEBAPP_URL", "https://example.test")
+
+    message = types.SimpleNamespace(
+        from_user=types.SimpleNamespace(first_name="Musavvir"),
+        chat=types.SimpleNamespace(id=123),
+    )
+
+    bot_module.send_welcome(message)
+
+    assert sent["chat_id"] == 123
+    assert "Musavvir" in sent["text"]
+    buttons = sent["markup"].keyboard
+    assert buttons, "WebApp button should be attached when WEBAPP_URL is set"
+    # pyTelegramBotAPI exposes the keyboard as plain dicts after building it.
+    assert buttons[0][0]["web_app"]["url"] == "https://example.test"

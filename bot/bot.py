@@ -25,7 +25,6 @@ def _setup_bot():
     """
     global bot
     import telebot
-    from telebot.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
     if BOT_TOKEN:
         bot = telebot.TeleBot(BOT_TOKEN)
@@ -53,6 +52,11 @@ def send_welcome(message):
     /start buyrug'i kelganda foydalanuvchiga salomlashish xabari
     va WebApp tugmasini ko'rsatish.
     """
+    # The keyboard types must be imported where they are used: importing them
+    # inside _setup_bot() left them out of this function's scope, so every
+    # /start raised "name 'ReplyKeyboardMarkup' is not defined".
+    from telebot.types import ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
+
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     
     if WEBAPP_URL:
