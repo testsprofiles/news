@@ -246,6 +246,43 @@ def test_unknown_frontend_page_is_rejected(client):
     assert client.get("/dostuff.html").status_code == 404
 
 
+FRONTEND_PAGE_SCRIPTS = {
+    "index.html": "js/main.js",
+    "login.html": "js/auth.js",
+    "post.html": "js/post.js",
+    "admin.html": "js/admin.js",
+    "page.html": "js/page.js",
+}
+
+
+@pytest.mark.parametrize("page,script", sorted(FRONTEND_PAGE_SCRIPTS.items()))
+def test_every_frontend_page_loads_its_script(client, page, script):
+    """post.html/admin.html/page.html shipped without a single <script> tag, so
+    inside the Web App they rendered a shell with no content ever injected."""
+    body = client.get(f"/{page}").data.decode()
+
+    assert "js/api.js" in body, f"{page} does not load the shared API layer"
+    assert script in body, f"{page} does not load {script}"
+
+
+@pytest.mark.parametrize("page", sorted(FRONTEND_PAGE_SCRIPTS))
+def test_every_frontend_page_loads_the_telegram_sdk(client, page):
+    """Telegram keeps its loading overlay until the page calls WebApp.ready()."""
+    body = client.get(f"/{page}").data.decode()
+
+    assert "telegram-web-app.js" in body
+
+
+def test_api_js_bootstraps_the_telegram_web_app(client):
+    """Guard: ready()/expand() must stay behind a check for window.Telegram so a
+    plain browser (and a blocked telegram.org CDN) still renders the portal."""
+    body = client.get("/js/api.js").data.decode()
+
+    assert "window.Telegram" in body
+    assert "tg.ready()" in body
+    assert "tg.expand()" in body
+
+
 def test_swagger_yaml_is_served(client):
     resp = client.get("/static/swagger.yaml")
 

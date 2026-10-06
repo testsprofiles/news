@@ -1,3 +1,14 @@
+// Telegram Mini App bootstrap. Telegram keeps its loading screen up until the
+// page reports that it is ready, and the WebView opens shorter than the phone
+// screen unless expanded - both read as an empty screen inside the client.
+// Guarded, because the page must still work in a plain browser.
+(() => {
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (!tg) return;
+  try { tg.ready(); } catch (e) {}
+  try { tg.expand(); } catch (e) {}
+})();
+
 const BASE_URL = '';
 
 const _getToken = () => {
