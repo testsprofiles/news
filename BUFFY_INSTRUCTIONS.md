@@ -7,5 +7,7 @@
   2. Frontend typecheck (`npx tsc --noEmit`) if UI is modified.
 - Auto Commit & Push: If tests pass with 0 errors, automatically run `git commit` with a descriptive message and execute `git push`.
 - Git Commit Sign-off: Never add Co-Authored-By or AI signatures to git commit messages. Commit strictly as the repository owner.
+- Real-time Logging: Every action, code change, test, git commit and push MUST be logged in real time to `CHANGELOG_JOURNAL.txt` with a timestamp.
+  - Format: `[YYYY-MM-DD HH:MM:SS] - [CATEGORY] - [ACTION AND DETAILS]`
 - Architecture Safety: Maintain `db_cursor` contextmanager in `database.py`, JWT verification (`@token_required`), and Telegram bot notifications in `bot/notifier.py`.
 - Human Clarification Triggers: STOP and ask for explicit confirmation ONLY if modifying DB schema/migrations, installing heavy packages, or changing `.env`.
