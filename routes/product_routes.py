@@ -5,6 +5,8 @@ from database import get_db_connection
 from utils.auth import token_required
 from pydantic import ValidationError
 from schemas.product import ProductCreate, ProductUpdate
+from bot.notifier import notify_product
+
 
 products_bp = Blueprint('products', __name__)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -23,7 +25,14 @@ def _row_to_product(r):
         "image": r["image_url"],
         "category": {"id": r["category_id"], "name": r["category_name"]}
     }
-
+def _fetch_full_product(cur, product_id):
+    cur.execute(
+        "SELECT p.id, p.name, p.description, p.price, p.image_url, "
+        "p.category_id, c.name AS category_name FROM products p "
+        "LEFT JOIN categories c ON p.category_id = c.id "
+        "WHERE p.id = %s;", (product_id,)
+    )
+    return cur.fetchone()
 
 @products_bp.route('/api/products', methods=['GET'])
 def get_products():
@@ -128,7 +137,57 @@ def upload_product_image(current_user_id, product_id):
     try:
         cur.execute("UPDATE products SET image_url = %s WHERE id = %s;", (image_url, product_id))
         conn.commit()
+        updated_product = _fetch_full_product(cur, product_id)
+        notify_product(updated_product, conn=conn, image_path=filepath, updated=False)
         return jsonify({'message': 'Rasm yuklandi!', 'image_url': image_url}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@products_bp.route('/api/products/<int:product_id>', methods=['PUT'])
+@token_required
+def update_product(current_user_id, product_id):
+    try:
+        data = ProductUpdate(**(request.get_json() or {}))
+    except ValidationError as e:
+        return jsonify(e.errors()), 400
+
+    fields = data.model_dump(exclude_unset=True)
+    if not fields:
+        return jsonify({'message': 'Kamida bitta maydon yuborilishi kerak!'}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    if 'category_id' in fields:
+        cur.execute("SELECT id FROM categories WHERE id = %s;", (fields['category_id'],))
+        if not cur.fetchone():
+            cur.close()
+            conn.close()
+            return jsonify({'message': 'Bunday category_id mavjud emas!'}), 400
+
+    try:
+        set_clause = ", ".join(f"{k} = %s" for k in fields.keys())
+        values = list(fields.values()) + [product_id]
+        cur.execute(f"UPDATE products SET {set_clause} WHERE id = %s RETURNING id;", values)
+        updated = cur.fetchone()
+        conn.commit()
+        if not updated:
+            return jsonify({'message': 'Mahsulot topilmadi!'}), 404
+        edited_product = _fetch_full_product(cur, product_id)
+
+        image_path = None
+        if edited_product.get("image_url"):
+            filename = os.path.basename(edited_product["image_url"])
+            image_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+
+        notify_product(edited_product, conn=conn, image_path=image_path, updated=True)
+
+
+        return jsonify({'message': 'Mahsulot yangilandi!'}), 200
     except Exception as e:
         conn.rollback()
         return jsonify({'message': f'Xatolik yuz berdi: {str(e)}'}), 500
