@@ -43,9 +43,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            cd ${{ secrets.PROJECT_PATH }}
-            git pull origin main
-            source venv/bin/activate
-            pip install -r requirements.txt
-            sudo systemctl restart app.service
+            cd ${{ secrets.PROJECT_PATH || '/var/www/news' }}
+            chmod +x deploy.sh
+            BRANCH=main ./deploy.sh
             
