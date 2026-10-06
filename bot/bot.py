@@ -98,6 +98,31 @@ if BOT_TOKEN:
     bot.message_handler(commands=["help"])(send_help)
 
 
+def setup_menu_button():
+    """
+    WebApp uchun doimiy (persistent) menyu tugmasini o'rnatadi.
+
+    /start yuborgan xabar klaviaturasi WebApp URL'ini xabar yuborilgan paytda
+    "muzlatib" qo'yadi: eski klaviatura saqlanib qolgan chat eski URL'ni ochadi.
+    Chat menyu tugmasi esa har ochilganda Telegram tomonidan qayta o'qiladi,
+    shuning uchun u doim joriy WEBAPP_URL'ga ishora qiladi.
+    """
+    from telebot.types import MenuButtonWebApp, WebAppInfo
+
+    if not WEBAPP_URL:
+        logger.warning("WEBAPP_URL yo'q, menyu tugmasi o'rnatilmadi")
+        return False
+
+    menu_button = MenuButtonWebApp(
+        type="web_app",
+        text="📱 Yangiliklar Portali",
+        web_app=WebAppInfo(WEBAPP_URL),
+    )
+    bot.set_chat_menu_button(menu_button=menu_button)
+    logger.info("WebApp menyu tugmasi o'rnatildi: %s", WEBAPP_URL)
+    return True
+
+
 def start_bot():
     """
     Botni cheksiz polling rejimida ishga tushirish funksiyasi
@@ -105,7 +130,12 @@ def start_bot():
     if not bot:
         logger.error("Bot tokeni yo'qligi sababli bot ishga tushmadi!")
         return
-    
+
+    try:
+        setup_menu_button()
+    except Exception as exc:  # noqa: BLE001 - polling must start even if this fails
+        logger.error("Menyu tugmasini o'rnatib bo'lmadi: %s", exc)
+
     logger.info("Telegram bot ishga tushdi...")
     while True:
         try:
