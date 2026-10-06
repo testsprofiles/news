@@ -78,3 +78,6 @@ Log format: [YYYY-MM-DD HH:MM:SS] - [CATEGORY] - [ACTION AND DETAILS]
   - Docker yoki virtual env yoki systemd service (app.service) — deploy usuli
   Bu ma'lumotlarni bersangiz deploy script tayyorlab beraman.]
 2026-10-06 14:39:00 - [STATUS] - [CHANGELOG_JOURNAL.txt yaratildi. Server so'rovlari tayyor. Pytest 0 errors. Push o'tdi. END.]
+
+2026-10-06 14:40:00 - [DEPLOY] - [Created .env.production.template and deploy.sh for production deployment. deploy.sh includes: git pull origin main, pip install -r requirements.txt, yoyo migrations, pytest, docker compose up -d --build.]
+2026-10-06 14:41:00 - [DEPLOY] - [CHANGELOG_JOURNAL.txt deployment log appended with [2026-10-06] timestamps.]
